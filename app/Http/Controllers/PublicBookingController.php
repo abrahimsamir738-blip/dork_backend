@@ -58,7 +58,7 @@ class PublicBookingController extends Controller
    return [
     'id' => $booking->id,
     'doctorName' => $booking->doctor->name ?? 'طبيب غير معروف',
-    'doctorImage' => $booking->doctor->image_url ?? null,
+    'doctorImage' => $booking->doctor->photo ?? null,
     'doctorSpecialty' => $booking->doctor->specialty ?? '',
     'bookedAt' => $booking->date,
     'branchName' => $booking->clinic->name ?? 'عيادة غير معروفة',
