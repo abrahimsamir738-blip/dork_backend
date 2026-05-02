@@ -57,7 +57,6 @@ class ClinicController extends Controller
   ]);
 
   if ($request->hasFile('photo')) {
-   // حذف الصورة القديمة لو موجودة
    if ($clinic->photo) {
     $oldPath = str_replace('/storage/', 'public/', $clinic->photo);
     Storage::delete($oldPath);

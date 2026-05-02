@@ -89,7 +89,14 @@ class OrderController extends Controller
    'consultation_fee' => 'sometimes|numeric|min:0',
    'service_fee' => 'sometimes|numeric|min:0',
   ]);
+  if (isset($validated['status']) && $validated['status'] === 'قيد الكشف') {
 
+   $request->user()->orders()
+    ->whereDate('created_at', now()->toDateString()) // في نفس اليوم
+    ->where('status', 'قيد الكشف')                  // حالته الحالية قيد الكشف
+    ->where('id', '!=', $id)                        // ليس الطلب الحالي الذي نقوم بتحديثه
+    ->update(['status' => 'تم الكشف']);
+  }
   $order->update($validated);
 
   return response()->json($order->load('clinic'));

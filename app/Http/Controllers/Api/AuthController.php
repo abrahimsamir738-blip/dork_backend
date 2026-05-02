@@ -129,34 +129,79 @@ class AuthController extends Controller
  public function createUser(Request $request)
  {
   $validator = Validator::make($request->all(), [
-   'name' => 'required|string|min:3|max:50',
-   'phone' => [
+   'name'     => 'required|string|min:3|max:50',
+   'phone'    => [
     'required',
-    'regex:/^01[0125][0-9]{8}$/', // التحقق من صيغة الموبايل المصري
+    'regex:/^01[0125][0-9]{8}$/',
     'unique:users,phone'
    ],
+   'password' => 'required|string|min:6',
   ], [
-   'phone.unique' => 'هذا الرقم مسجل مسبقاً، جرب تسجيل الدخول.',
-   'phone.regex' => 'يرجى إدخال رقم موبايل مصري صحيح.',
+   'phone.unique'      => 'هذا الرقم مسجل مسبقاً، جرب تسجيل الدخول.',
+   'phone.regex'       => 'يرجى إدخال رقم موبايل مصري صحيح.',
+   'password.required' => 'كلمة المرور مطلوبة.',
+   'password.min'      => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.',
   ]);
 
   if ($validator->fails()) {
    return response()->json([
-    'status' => 'error',
+    'status'  => 'error',
     'message' => $validator->errors()->first()
    ], 422);
   }
 
   $user = User::create([
-   'name' => $request->name,
-   'phone' => $request->phone,
-   // 'password' => bcrypt($request->phone), // إذا كنت تستخدم باسوورد مستقبلاً
+   'name'     => $request->name,
+   'phone'    => $request->phone,
+   'password' => Hash::make($request->password),
   ]);
+
+  $token = $user->createToken('auth-token')->plainTextToken;
+
+  return response()->json([
+   'status'  => 'success',
+   'message' => 'تم إنشاء الحساب بنجاح',
+   'user'    => $user,
+   'token'   => $token,
+  ], 201);
+ }
+
+ public function loginUser(Request $request)
+ {
+  $validator = Validator::make($request->all(), [
+   'phone'    => [
+    'required',
+    'regex:/^01[0125][0-9]{8}$/',
+   ],
+   'password' => 'required|string',
+  ], [
+   'phone.regex'       => 'يرجى إدخال رقم موبايل مصري صحيح.',
+   'phone.required'    => 'رقم الموبايل مطلوب.',
+   'password.required' => 'كلمة المرور مطلوبة.',
+  ]);
+
+  if ($validator->fails()) {
+   return response()->json([
+    'status'  => 'error',
+    'message' => $validator->errors()->first()
+   ], 422);
+  }
+
+  $user = User::where('phone', $request->phone)->first();
+
+  if (!$user || !Hash::check($request->password, $user->password)) {
+   return response()->json([
+    'status'  => 'error',
+    'message' => 'رقم الموبايل أو كلمة المرور غير صحيحة',
+   ], 401);
+  }
+
+  $token = $user->createToken('auth-token')->plainTextToken;
 
   return response()->json([
    'status' => 'success',
-   'message' => 'تم إنشاء الحساب بنجاح',
-   'user' => $user
-  ], 201);
+   'user'   => $user,
+   'token'  => $token,
+  ], 200);
  }
 }

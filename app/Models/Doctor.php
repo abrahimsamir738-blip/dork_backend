@@ -9,44 +9,44 @@ use Laravel\Sanctum\HasApiTokens;
 
 class Doctor extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+ use HasApiTokens, Notifiable;
 
-    protected $table = 'doctors';
+ protected $table = 'doctors';
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'title',
-        'specialty',
-        'bio',
-        'photo',
-    ];
+ protected $fillable = [
+  'name',
+  'email',
+  'password',
+  'title',
+  'specialty',
+  'bio',
+  'photo',
+ ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+ protected $hidden = [
+  'password',
+  'remember_token',
+ ];
 
-    protected function casts(): array
-    {
-        return [
-            'password' => 'hashed',
-        ];
-    }
+ protected function casts(): array
+ {
+  return [
+   'password' => 'hashed',
+  ];
+ }
 
-    public function clinics()
-    {
-        return $this->hasMany(Clinic::class);
-    }
+ public function clinics()
+ {
+  return $this->hasMany(Clinic::class);
+ }
 
-    public function orders()
-    {
-        return $this->hasMany(Order::class);
-    }
+ public function orders()
+ {
+  return $this->hasMany(Order::class);
+ }
 
-    public function timeSlots()
-    {
-        return $this->hasMany(TimeSlot::class);
-    }
+ public function timeSlots()
+ {
+  return $this->hasMany(TimeSlot::class);
+ }
 }

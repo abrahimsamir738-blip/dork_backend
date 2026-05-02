@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes (no authentication required)
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login-user', [AuthController::class, 'loginUser']);
+Route::post('/loginUser', [AuthController::class, 'loginUser']);
+
+
 Route::post('register', [AuthController::class, 'register']);
 Route::post('createUser', [AuthController::class, 'createUser']);
 

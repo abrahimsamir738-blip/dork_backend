@@ -12,28 +12,56 @@ class PublicBookingController extends Controller
 
  public function show($id)
  {
-  // جلب الحجز مع العلاقات الضرورية
   $booking = Order::with(['doctor', 'clinic'])->find($id);
 
   if (!$booking) {
    return response()->json([
-    'status' => 'error',
+    'status'  => 'error',
     'message' => 'الحجز غير موجود'
    ], 404);
   }
 
-  // تنسيق البيانات لتناسب الـ Frontend (Data Mapping)
+  $today      = $booking->created_at->toDateString();
+  $doctorId   = $booking->doctor_id;
+
+  // ── رقم دور المريض ──────────────────────────────────
+  // عد كل الحجوزات غير الملغية في نفس اليوم ونفس الدكتور لحد الـ id بتاعه
+  $turn_number = Order::whereDate('created_at', $today)
+   ->where('doctor_id', $doctorId)
+   ->where('status', '!=', 'ملغي')
+   ->where('id', '<=', $booking->id)
+   ->count();
+
+  // ── الدور الحالي اللي بيتخدم دلوقتي ────────────────
+  // جيب أقدم حجز حالته "قيد الكشف" في نفس اليوم ونفس الدكتور
+  $currentServingId = Order::whereDate('created_at', $today)
+   ->where('doctor_id', $doctorId)
+   ->where('status', 'قيد الكشف')
+   ->min('id');
+
+  if ($currentServingId) {
+   // حوّل الـ id لرقم دور
+   $current_serving_number = Order::whereDate('created_at', $today)
+    ->where('doctor_id', $doctorId)
+    ->where('status', '!=', 'ملغي')
+    ->where('id', '<=', $currentServingId)
+    ->count();
+  } else {
+   // مفيش حد قيد الكشف دلوقتي → ابدأ من 0
+   $current_serving_number = 0;
+  }
+
   return response()->json([
    'status' => 'success',
-   'data' => [
-    'id' => $booking->id,
-    'status' => $booking->status,
-    'turn_number' => $booking->turn_number,
-    'doctorName' => $booking->doctor->name ?? 'طبيب غير معروف',
-    'branchName' => $booking->clinic->name ?? 'عيادة غير معروفة',
-    'clinic_id' => $booking->clinic_id,
-    'doctorLocation' => $booking->clinic->address ?? '', // أو أي حقل يعبر عن العنوان
-    // يمكنك إضافة أي بيانات أخرى يحتاجها الـ QueueDashboard
+   'data'   => [
+    'id'                     => $booking->id,
+    'status'                 => $booking->status,
+    'turn_number'            => $turn_number,
+    'current_serving_number' => $current_serving_number,
+    'doctorName'             => $booking->doctor->name    ?? 'طبيب غير معروف',
+    'branchName'             => $booking->clinic->name    ?? 'عيادة غير معروفة',
+    'clinic_id'              => $booking->clinic_id,
+    'doctorLocation'         => $booking->clinic->address ?? '',
    ]
   ]);
  }
